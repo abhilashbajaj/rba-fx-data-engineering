@@ -1,0 +1,37 @@
+
+name: RBA FX Data Ingestion
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  download-rba:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Download RBA exchange rates
+        run: python ingestion/download_rba.py
+
+      - name: Verify downloaded file
+        run: |
+          ls -lh downloads/
+          test -n "$(find downloads -name '*.csv' -type f -print -quit)"
+
+      - name: Upload CSV as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rba-fx-download
+          path: downloads/*.csv
+          if-no-files-found: error
+          retention-days: 7
